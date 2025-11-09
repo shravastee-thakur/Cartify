@@ -11,10 +11,8 @@ interface IUser {
 	verificationTokenExpiresAt?: Date,
     twoFactorSecret?: string
 }
-
 import mongoose from "mongoose"
 import bcrypt from "bcrypt"
-
 
 const userSchema = new mongoose.Schema<IUser>({
 
