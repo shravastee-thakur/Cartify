@@ -9,12 +9,31 @@ import {
 import { redisClient } from "../utils/redis";
 import transporter from "../utils/sendMail";
 import crypto from "crypto";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  hashToken,
+} from "../utils/jwtToken";
+import {
+  deleteRefreshToken,
+  getStoredHashedRefreshToken,
+  storeRefreshToken,
+} from "../utils/redisTokenStore";
+import { string } from "zod";
 
 // Constants
 const VERIFICATION_TOKEN_EXPIRY = 300;
 const OTP_RATE_LIMIT_DURATION = 300;
 const OTP_EXPIRY = 300;
+const RESET_TOKEN_EXPIRY = 300;
+const REFRESH_COOKIE_NAME = process.env.REFRESH_COOKIE_NAME || "refreshToken";
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as "lax" | "strict" | "none",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 
 export const register = async (
   req: Request,
@@ -75,7 +94,7 @@ export const register = async (
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message:
         "Verification email sent. Please check your email to complete registration.",
@@ -127,7 +146,7 @@ export const verifyEmail = async (
     return res.status(201).json({
       success: true,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
       },
@@ -178,7 +197,7 @@ export const loginStepOne = async (
     const otp = String(Math.floor(100000 + Math.random() * 900000));
 
     // Store OTP in Redis
-    const otpKey = `otp:${user._id}`;
+    const otpKey = `otp:${user.id}`;
     await redisClient.set(otpKey, otp, { EX: OTP_EXPIRY });
 
     // Send OTP email
@@ -195,14 +214,14 @@ export const loginStepOne = async (
     await transporter.sendMail(mailOption);
 
     // Update last login
-    await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+    await User.findByIdAndUpdate(user.id, { lastLogin: new Date() });
 
     await redisClient.del(loginRateLimitKey);
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "OTP sent to your email. Please verify to complete login.",
-      userId: user._id,
+      userId: user.id,
     });
   } catch (error: any) {
     next(error);
@@ -263,21 +282,255 @@ export const verifyLogin = async (
         .json({ success: false, message: "User not found" });
     }
 
+    const accessToken = generateAccessToken({
+      id: user.id.toString(),
+      role: user.role,
+    });
+
+    const refreshToken = generateRefreshToken();
+    await storeRefreshToken(user.id.toString(), refreshToken);
+
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, cookieOptions);
+
     await redisClient.del(otpKey);
     await redisClient.del(otpRateLimitKey);
 
     await User.findByIdAndUpdate(userId, { lastLogin: new Date() });
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "OTP verified successfully",
+      accessToken,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const rawToken = req.cookies?.[REFRESH_COOKIE_NAME];
+    if (!rawToken) {
+      return res
+        .status(401)
+        .json({ success: false, message: "No refresh token received" });
+    }
+
+    const userId = req.body.userId || req.query.userId || undefined;
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "userId required to refresh" });
+    }
+
+    const storedHashed = await getStoredHashedRefreshToken(userId);
+    const presentedHashed = hashToken(rawToken);
+
+    if (!storedHashed) {
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      return res.status(403).json({
+        success: false,
+        message: "Refresh token revoked. Please login again.",
+      });
+    }
+
+    if (storedHashed !== presentedHashed) {
+      await deleteRefreshToken(userId);
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      return res.status(403).json({
+        success: false,
+        message: "Possible token reuse detected. Please login again.",
+      });
+    }
+
+    const newRefreshToken = generateRefreshToken();
+    await storeRefreshToken(userId, newRefreshToken);
+
+    res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, cookieOptions);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      await deleteRefreshToken(userId);
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const newAccessToken = generateAccessToken({
+      id: user.id.toString(),
+      role: user.role,
+    });
+    return res.status(201).json({
+      success: true,
+      accessToken: newAccessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.body.userId;
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
+    }
+
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await user.comparePassword(oldPassword);
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Old password is incorrect" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return res
+      .status(201)
+      .json({ success: true, message: "Password changed successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const forgetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const resetToken = crypto.randomBytes(10).toString("hex");
+    const hashResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    const resetKey = `resetToken:${user.id}`;
+    await redisClient.set(resetKey, hashResetToken, {
+      EX: RESET_TOKEN_EXPIRY,
+    });
+
+    user.resetPasswordExpiresAt = new Date(
+      Date.now() + RESET_TOKEN_EXPIRY * 1000
+    );
+    await user.save();
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}&id=${user.id}`;
+
+    const mailOption = {
+      from: process.env.SENDER_EMAIL,
+      to: user.email,
+      subject: "Reset Your Password",
+      html: `
+        <p>You requested to reset your password.</p>
+        <p>Click the link below to reset it:</p>
+        <a href="${resetLink}" style="display:inline-block;padding:10px 14px;background:#4f46e5;color:#fff;border-radius:6px;text-decoration:none;">Reset Password</a>
+        <p>This link will expire in 5 minutes.</p>
+      `,
+    };
+    await transporter.sendMail(mailOption);
+
+    return res.status(201).json({
+      success: true,
+      message: "Password reset link sent to your email",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userId, token, newPassword } = req.body;
+    if (!userId || !token || !newPassword) {
+      return res.status(400).json({
+        message: "userId, token and newPassword are required.",
+      });
+    }
+
+    const hashToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const resetKey = `resetToken:${userId}`;
+    const storedHash = await redisClient.get(resetKey);
+    if (!storedHash || storedHash !== hashToken) {
+      return res.status(400).json({
+        message: "Reset token is invalid or expired.",
+      });
+    }
+
+    const user = await User.findById(userId).select("+password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    await redisClient.del(resetKey);
+    return res.status(201).json({
+      success: true,
+      message: "Password has been successfully reset.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.body.userId || req.query.userId || undefined;
+    if (userId) {
+      await deleteRefreshToken(userId);
+    }
+
+    res.clearCookie(REFRESH_COOKIE_NAME);
+    return res.status(201).json({ success: true, message: "Logged out" });
   } catch (error) {
     next(error);
   }

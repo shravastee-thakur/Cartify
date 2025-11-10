@@ -13,6 +13,8 @@ interface IUser extends mongoose.Document {
   verificationToken?: string;
   verificationTokenExpiresAt?: Date;
   twoFactorSecret?: string;
+
+  comparePassword(plainPassword: string): Promise<boolean>;
 }
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
