@@ -4,6 +4,7 @@ import cors from "cors";
 import { errorHandler } from "./middlewares/errorMiddleware";
 import { connectDb } from "./utils/db";
 import { connectRedis } from "./utils/redis";
+import cookieParser from "cookie-parser";
 import UserRouter from "./routes/UserRoute";
 
 const app: Express = express();
@@ -18,9 +19,10 @@ connectRedis();
 
 // Middlewares
 app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
-    origin: process.env.HOST_URL,
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );

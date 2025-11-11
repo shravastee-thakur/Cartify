@@ -10,6 +10,7 @@ import {
   resetPassword,
   forgetPassword,
 } from "../controllers/UserController";
+import { requireAuth } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
@@ -18,9 +19,9 @@ router.post("/verify-email", verifyEmail);
 router.post("/loginStepOne", loginStepOne);
 router.post("/verifyLogin", verifyLogin);
 router.post("/refreshToken", refreshToken);
-router.post("/changePassword", changePassword);
+router.post("/changePassword", requireAuth, changePassword);
 router.post("/forgetPassword", forgetPassword);
 router.post("/resetPassword", resetPassword);
-router.post("/logout", logout);
+router.post("/logout", requireAuth, logout);
 
 export default router;
