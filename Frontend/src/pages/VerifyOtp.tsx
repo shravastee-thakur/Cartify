@@ -1,32 +1,48 @@
-import { useState, useRef } from 'react';
+import axios from "axios";
+import { useState, useRef, useEffect } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const VerifyOtp = () => {
-  const [otp, setOtp] = useState('');
-  const inputRef = useRef(null);
+  const Navigate = useNavigate();
+  const userId = useSelector((state: RootState) => state.user.userId);
+  const [otp, setOtp] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus the input on mount
-//   useEffect(() => {
-//     if (inputRef.current) {
-//       inputRef.current.focus();
-//     }
-//   }, []);
-
-  const handleChange = (e: any) => {
-    const value = e.target.value;
-    // Allow only digits and limit to 6 characters
-    if (/^\d{0,6}$/.test(value)) {
-      setOtp(value);
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
-  };
+  }, []);
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if (otp.length !== 6) {
-      alert('Please enter a 6-digit OTP.');
-      return;
-    }
-    console.log('OTP submitted:', otp);
-    // Add your verification logic here (e.g., API call)
+    try {
+      const res = await axios.post(
+        "http://localhost:3000/api/v1/user/verifyLogin",
+        { otp, userId },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      console.log(res.data);
+
+      if (res.data.success) {
+        toast(res.data.message, {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+        Navigate("/");
+      }
+    } catch (error) {}
   };
 
   return (
@@ -39,7 +55,10 @@ const VerifyOtp = () => {
 
           <form onSubmit={handleSubmit} className="p-6">
             <div className="mb-6">
-              <label htmlFor="otp" className="block text-gray-700 text-sm font-medium mb-2">
+              <label
+                htmlFor="otp"
+                className="block text-gray-700 text-sm font-medium mb-2"
+              >
                 Enter OTP:
               </label>
               <input
@@ -47,7 +66,7 @@ const VerifyOtp = () => {
                 type="text"
                 id="otp"
                 value={otp}
-                onChange={handleChange}
+                onChange={(e) => setOtp(e.target.value)}
                 maxLength={6}
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -65,8 +84,8 @@ const VerifyOtp = () => {
               disabled={otp.length !== 6}
               className={`w-full font-bold py-2 px-4 rounded-md transition duration-300 ${
                 otp.length === 6
-                  ? 'bg-[#FA812F] hover:bg-[#e06a1a] text-white'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ? "bg-[#FA812F] hover:bg-[#e06a1a] text-white"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
               Verify OTP
@@ -74,8 +93,11 @@ const VerifyOtp = () => {
 
             <div className="mt-4 text-center">
               <p className="text-gray-600 text-sm">
-                Didn't receive the code?{' '}
-                <a href="#" className="text-[#FA812F] hover:underline font-medium">
+                Didn't receive the code?{" "}
+                <a
+                  href="#"
+                  className="text-[#FA812F] hover:underline font-medium"
+                >
                   Resend OTP
                 </a>
               </p>
