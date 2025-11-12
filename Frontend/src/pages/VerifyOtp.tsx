@@ -5,7 +5,12 @@ import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { setAccessToken } from "../redux/UserSlice";
+import {
+  setAccessToken,
+  setIsVerified,
+  setName,
+  setRole,
+} from "../redux/UserSlice";
 
 const VerifyOtp = () => {
   const Navigate = useNavigate();
@@ -44,9 +49,14 @@ const VerifyOtp = () => {
           },
         });
         dispatch(setAccessToken(res.data.accessToken));
+        dispatch(setIsVerified(res.data.user.isVerified));
+        dispatch(setName(res.data.user.name));
+        dispatch(setRole(res.data.user.role));
         Navigate("/");
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (

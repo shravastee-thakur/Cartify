@@ -1,15 +1,54 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+
+import type { RootState } from "../redux/store";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { setIsVerified } from "../redux/UserSlice";
 
 const Navbar = () => {
+  const dispatch = useDispatch();
+  const { userId, accessToken, isVerified, name, role } = useSelector(
+    (state: RootState) => state.user
+  );
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: any) => {
     e.preventDefault();
-    console.log('Searching for:', searchQuery);
+    console.log("Searching for:", searchQuery);
     // Add your actual search logic here
     // e.g., router.push(`/search?q=${searchQuery}`) or API call
+  };
+
+  const handleLogout = async () => {
+    try {
+      const res = await axios.post(
+        "http://localhost:3000/api/v1/user/logout",
+        { userId },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      console.log(res.data);
+      if (res.data.success) {
+        toast(res.data.message, {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+        dispatch(setIsVerified(false));
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -66,12 +105,24 @@ const Navbar = () => {
               <p className="hover:text-yellow-200 transition font-semibold">
                 About
               </p>
-              <p className="hover:text-yellow-200 transition font-semibold">
-               <Link to={"/login"}>Login</Link> 
-              </p>
-              <p className="hover:text-yellow-200 transition font-semibold">
-                Username
-              </p>
+
+              {isVerified ? (
+                <div className="flex gap-6">
+                  <p className="hover:text-yellow-200 transition font-semibold">
+                    Welcome, <span className="font-bold">{name}</span>
+                  </p>
+                  <p
+                    onClick={handleLogout}
+                    className="hover:text-yellow-200 transition font-semibold cursor-pointer"
+                  >
+                    Logout
+                  </p>
+                </div>
+              ) : (
+                <p className="hover:text-yellow-200 transition font-semibold">
+                  <Link to="/login">Login</Link>
+                </p>
+              )}
 
               {/* Cart Icon */}
               <p className="relative hover:text-yellow-200 transition font-semibold">
@@ -103,7 +154,7 @@ const Navbar = () => {
               className="inline-flex items-center justify-center p-2 rounded-md hover:text-white hover:bg-gray-800 focus:outline-none"
             >
               <svg
-                className={`${isOpen ? 'hidden' : 'block'} h-6 w-6`}
+                className={`${isOpen ? "hidden" : "block"} h-6 w-6`}
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -117,7 +168,7 @@ const Navbar = () => {
                 />
               </svg>
               <svg
-                className={`${isOpen ? 'block' : 'hidden'} h-6 w-6`}
+                className={`${isOpen ? "block" : "hidden"} h-6 w-6`}
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -136,7 +187,7 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu with Search */}
-      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden`}>
+      <div className={`${isOpen ? "block" : "hidden"} md:hidden`}>
         <div className="px-2 pt-2 pb-3 space-y-2 sm:px-3">
           {/* Mobile Search Form */}
           <form onSubmit={handleSearch} className="px-3">
@@ -171,35 +222,31 @@ const Navbar = () => {
             </div>
           </form>
 
+          {isVerified && (
+            <p className="block px-3 py-2 rounded-md hover:bg-indigo-600 font-bold">
+              Welcome, {name}
+            </p>
+          )}
+
           <p className="block px-3 py-2 rounded-md hover:bg-indigo-600">
             Products
           </p>
           <p className="block px-3 py-2 rounded-md hover:bg-indigo-600">
             About
           </p>
-          <p className="block px-3 py-2 rounded-md hover:bg-indigo-600">
-            <Link to={"/login"}>Login</Link>
-          </p>
-          <p className="block px-3 py-2 rounded-md hover:bg-indigo-600">
-            Username
-          </p>
-          <p className="block px-3 py-2 rounded-md hover:bg-indigo-600 items-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+
+          {isVerified ? (
+            <p
+              onClick={handleLogout}
+              className="block px-3 py-2  font-semibold cursor-pointer"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
-            Cart
-          </p>
+              Logout
+            </p>
+          ) : (
+            <p className="block px-3 py-2  font-semibold">
+              <Link to="/login">Login</Link>
+            </p>
+          )}
         </div>
       </div>
     </nav>

@@ -26,11 +26,12 @@ app.use(
     credentials: true,
   })
 );
-app.use(errorHandler);
 
 // Routes
 app.use("/api/v1/user", UserRouter);
 // http://localhost:3000/api/v1/user/register
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Listening to port: http://localhost:${PORT}`);

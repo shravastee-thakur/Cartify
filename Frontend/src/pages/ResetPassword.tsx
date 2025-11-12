@@ -1,17 +1,29 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import type { FormEvent } from "react";
+import axios from "axios";
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
+  const Navigate = useNavigate();
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email) {
-      alert('Please enter your email address.');
-      return;
+    try {
+      const res = await axios.post(
+        "http://localhost:3000/api/v1/user/forgetPassword",
+        { email },
+        {
+          withCredentials: true,
+        }
+      );
+      console.log(res.data);
+      if (res.data.success) {
+        Navigate("/new-password");
+      }
+    } catch (error) {
+      console.log(error);
     }
-    console.log('Password reset requested for:', email);
-    // Add your API call here (e.g., send reset link)
   };
 
   return (
@@ -24,7 +36,10 @@ const ResetPassword = () => {
 
           <form onSubmit={handleSubmit} className="p-6">
             <div className="mb-6">
-              <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-2">
+              <label
+                htmlFor="email"
+                className="block text-gray-700 text-sm font-medium mb-2"
+              >
                 Email Address:
               </label>
               <input
@@ -37,7 +52,8 @@ const ResetPassword = () => {
                 placeholder="Enter your email"
               />
               <p className="mt-2 text-gray-500 text-sm">
-                Enter your email and we’ll send you a link to reset your password.
+                Enter your email and we’ll send you a link to reset your
+                password.
               </p>
             </div>
 

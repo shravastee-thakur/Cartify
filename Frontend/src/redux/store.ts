@@ -20,7 +20,7 @@ import userSlice from "./UserSlice";
 const persistConfig = {
   key: "user",
   storage,
-  whitelist: ["userId", "accessToken"],
+  whitelist: ["userId", "accessToken", "isVerified", "name", "role"],
 };
 
 const persistedUserReducer = persistReducer(persistConfig, userSlice);

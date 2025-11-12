@@ -305,6 +305,7 @@ export const verifyLogin = async (
         name: user.name,
         email: user.email,
         role: user.role,
+        isVerified: user.isVerified,
       },
     });
   } catch (error) {
@@ -452,7 +453,7 @@ export const forgetPassword = async (
     );
     await user.save();
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}&id=${user.id}`;
+    const resetLink = `${process.env.FRONTEND_URL}/new-password?token=${resetToken}&id=${user.id}`;
 
     const mailOption = {
       from: process.env.SENDER_EMAIL,
@@ -529,7 +530,9 @@ export const logout = async (
     }
 
     res.clearCookie(REFRESH_COOKIE_NAME);
-    return res.status(201).json({ success: true, message: "Logged out" });
+    return res
+      .status(201)
+      .json({ success: true, message: "User logged out successfully" });
   } catch (error) {
     next(error);
   }
