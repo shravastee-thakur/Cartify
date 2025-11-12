@@ -12,7 +12,7 @@ interface FormData {
 }
 
 const Login = () => {
-  const Dispatch = useDispatch();
+  const dispatch = useDispatch();
   const Navigate = useNavigate();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [formData, setFormData] = useState<FormData>({
@@ -52,7 +52,7 @@ const Login = () => {
         });
 
         Navigate("/verify-otp");
-        Dispatch(setUserId(res.data.userId));
+        dispatch(setUserId(res.data.userId));
       }
     } catch (error: any) {
       console.log(error);

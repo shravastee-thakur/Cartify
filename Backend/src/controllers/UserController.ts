@@ -19,7 +19,6 @@ import {
   getStoredHashedRefreshToken,
   storeRefreshToken,
 } from "../utils/redisTokenStore";
-import { string } from "zod";
 
 // Constants
 const VERIFICATION_TOKEN_EXPIRY = 300;

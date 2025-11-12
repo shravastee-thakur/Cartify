@@ -1,12 +1,15 @@
 import axios from "axios";
+import type { FormEvent } from "react";
 import { useState, useRef, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { setAccessToken } from "../redux/UserSlice";
 
 const VerifyOtp = () => {
   const Navigate = useNavigate();
+  const dispatch = useDispatch();
   const userId = useSelector((state: RootState) => state.user.userId);
   const [otp, setOtp] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -17,7 +20,7 @@ const VerifyOtp = () => {
     }
   }, []);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const res = await axios.post(
@@ -40,6 +43,7 @@ const VerifyOtp = () => {
             color: "#fff",
           },
         });
+        dispatch(setAccessToken(res.data.accessToken));
         Navigate("/");
       }
     } catch (error) {}
