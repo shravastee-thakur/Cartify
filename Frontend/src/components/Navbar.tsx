@@ -52,7 +52,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-[#FA812F] text-white">
+    <nav className="bg-[#962119] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[65px]">
           {/* Logo */}
@@ -108,9 +108,17 @@ const Navbar = () => {
 
               {isVerified ? (
                 <div className="flex gap-6">
-                  <p className="hover:text-yellow-200 transition font-semibold">
-                    Welcome, <span className="font-bold">{name}</span>
+                  <p className="text-yellow-300 transition font-semibold">
+                    Welcome,
+                    <Link to={"/profile"}>
+                      <span className="font-bold">{name}</span>
+                    </Link>
                   </p>
+                  {role === "admin" && (
+                    <p className="hover:text-yellow-200 transition font-semibold">
+                      <Link to="/admin-dashboard">Admin</Link>
+                    </p>
+                  )}
                   <p
                     onClick={handleLogout}
                     className="hover:text-yellow-200 transition font-semibold cursor-pointer"
@@ -223,17 +231,19 @@ const Navbar = () => {
           </form>
 
           {isVerified && (
-            <p className="block px-3 py-2 rounded-md hover:bg-indigo-600 font-bold">
+            <p className="block px-3 py-2 rounded-md font-bold text-yellow-300">
               Welcome, {name}
             </p>
           )}
 
-          <p className="block px-3 py-2 rounded-md hover:bg-indigo-600">
-            Products
-          </p>
-          <p className="block px-3 py-2 rounded-md hover:bg-indigo-600">
-            About
-          </p>
+          {isVerified && role === "admin" && (
+            <p className="block px-3 py-2 rounded-md font-semibold">
+              <Link to="/admin-dashboard">Admin</Link>
+            </p>
+          )}
+
+          <p className="block px-3 py-2 rounded-md font-semibold">Products</p>
+          <p className="block px-3 py-2 rounded-md font-semibold">About</p>
 
           {isVerified ? (
             <p

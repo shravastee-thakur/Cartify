@@ -1,0 +1,257 @@
+import React, { useState, useEffect } from "react";
+
+// Define user profile type
+interface UserProfile {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  city: string;
+  pinCode: string;
+}
+
+type Tab = "profile" | "orders";
+
+const ProfilePage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<Tab>("profile");
+  const [loading, setLoading] = useState(true);
+
+  // Initialize form data with empty values (will be replaced)
+  const [formData, setFormData] = useState<UserProfile>({
+    name: "",
+    email: "",
+    phoneNumber: "",
+    address: "",
+    city: "",
+    pinCode: "",
+  });
+
+  // Simulate fetching user data (replace with real API call)
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        // ✅ REPLACE THIS WITH YOUR ACTUAL API CALL
+        // Example: const response = await api.get('/user/profile');
+        // For demo, we use mock data
+        const mockUserData: UserProfile = {
+          name: "Shravastee Thakur",
+          email: "shravastee@example.com",
+          phoneNumber: "+91 98765 43210",
+          address: "123 Main Street, Sector 5",
+          city: "Mumbai",
+          pinCode: "400001",
+        };
+
+        // Simulate network delay
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        setFormData(mockUserData);
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        // Optionally show error to user
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Updated profile:", formData);
+    alert("Profile updated successfully!");
+    // TODO: Send formData to your backend API
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-65px)] flex items-center justify-center bg-gray-50">
+        <div className="text-lg text-gray-600">Loading your profile...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-[calc(100vh-65px)] bg-gray-50 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Tabs */}
+        <div className="flex justify-center border-b border-gray-200 mb-6">
+          <button
+            className={`py-3 px-6 font-medium text-lg ${
+              activeTab === "profile"
+                ? "text-[#FA812F] border-b-2 border-[#FA812F]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+            onClick={() => setActiveTab("profile")}
+          >
+            Profile
+          </button>
+          <button
+            className={`py-3 px-6 font-medium text-lg ${
+              activeTab === "orders"
+                ? "text-[#FA812F] border-b-2 border-[#FA812F]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+            onClick={() => setActiveTab("orders")}
+          >
+            Orders
+          </button>
+        </div>
+
+        {activeTab === "profile" ? (
+          <div className="bg-white mx-auto max-w-xl shadow-xl rounded-lg overflow-hidden">
+            <div className="bg-[#FA812F] p-5 text-white">
+              <h2 className="text-xl md:text-2xl font-bold text-center">
+                My Profile
+              </h2>
+            </div>
+            <form onSubmit={handleSubmit} className="p-5 md:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-gray-700 text-sm font-medium mb-1"
+                  >
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-gray-700 text-sm font-medium mb-1"
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="phoneNumber"
+                    className="block text-gray-700 text-sm font-medium mb-1"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="city"
+                    className="block text-gray-700 text-sm font-medium mb-1"
+                  >
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="address"
+                    className="block text-gray-700 text-sm font-medium mb-1"
+                  >
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="pinCode"
+                    className="block text-gray-700 text-sm font-medium mb-1"
+                  >
+                    Pin Code
+                  </label>
+                  <input
+                    type="text"
+                    id="pinCode"
+                    name="pinCode"
+                    value={formData.pinCode}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button
+                  type="submit"
+                  className="w-full bg-[#FA812F] hover:bg-[#e06a1a] text-white font-bold py-2 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:ring-offset-2"
+                >
+                  Update Profile
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-white shadow-xl rounded-lg overflow-hidden">
+            <div className="bg-[#FA812F] p-5 text-white">
+              <h2 className="text-xl md:text-2xl font-bold text-center">
+                My Orders
+              </h2>
+            </div>
+            <div className="p-5 md:p-6 text-center">
+              <p className="text-gray-600">
+                Your order history will appear here soon.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ProfilePage;
