@@ -4,7 +4,6 @@ export const registerSchema = z.object({
   name: z.string().trim(),
   email: z.string().email("Email must be valid").trim().lowercase(),
   password: z.string().min(6, "Password must be at least 6 characters").max(14),
-
 });
 
 export const loginSchema = z.object({
@@ -15,4 +14,12 @@ export const loginSchema = z.object({
 export const otpVerificationSchema = z.object({
   userId: z.string(),
   otp: z.string().length(6),
+});
+
+export const updateUserSchema = z.object({
+  name: z.string().trim().optional(),
+  phoneNumber: z.string().optional(),
+  address: z.string().max(200).optional(),
+  city: z.string().max(10).optional(),
+  pinCode: z.string().optional(),
 });

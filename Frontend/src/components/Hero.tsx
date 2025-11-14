@@ -1,7 +1,7 @@
 const Hero = () => {
   return (
-    <section>
-      <img src="./21643.avif" alt="Hero image" />
+    <section className="mt-2">
+      <img src="./HeroBanner.avif" alt="Hero image" />
     </section>
   );
 };

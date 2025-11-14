@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from "express";
+import { AuthRequest } from "../middlewares/authMiddleware";
 import User from "../models/UserModel";
 import sanitize from "mongo-sanitize";
 import {
   loginSchema,
   otpVerificationSchema,
   registerSchema,
+  updateUserSchema,
 } from "../utils/zod";
 import { redisClient } from "../utils/redis";
 import transporter from "../utils/sendMail";
@@ -313,6 +315,52 @@ export const verifyLogin = async (
   }
 };
 
+export const getUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user.id;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is missing from token",
+      });
+    }
+
+    const user = await User.findById(userId).select(
+      "-password -refreshToken -otp -twoFactorSecret"
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        city: user.city,
+        pinCode: user.pinCode,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const refreshToken = async (
   req: Request,
   res: Response,
@@ -392,7 +440,8 @@ export const changePassword = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.body.userId;
+    const authReq = req as AuthRequest;
+    const userId = authReq.user.id;
     const { oldPassword, newPassword } = req.body;
     if (!oldPassword || !newPassword) {
       return res
@@ -518,13 +567,86 @@ export const resetPassword = async (
   }
 };
 
+export const updateUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user.id;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const sanitizeBody = sanitize(req.body);
+    delete sanitizeBody.userId;
+    delete sanitizeBody.email;
+    delete sanitizeBody.password;
+    delete sanitizeBody.role;
+
+    const validation = updateUserSchema.safeParse(sanitizeBody);
+    if (!validation.success) {
+      const messages = validation.error.issues.map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        message: messages.join(", "),
+      });
+    }
+
+    const updates = validation.data;
+
+    const user = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+      runValidators: true,
+    }).select("-password -refreshToken -otp -twoFactorSecret");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        city: user.city,
+        pinCode: user.pinCode,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const logout = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const userId = req.body.userId || req.query.userId || undefined;
+    const token = req.cookies?.[REFRESH_COOKIE_NAME];
+
+    if (token) {
+      const userId = req.body.userId || req.query.userId;
+      if (userId) {
+        await deleteRefreshToken(userId);
+      }
+    }
+    const userId = req.body.userId || req.query.userId;
     if (userId) {
       await deleteRefreshToken(userId);
     }

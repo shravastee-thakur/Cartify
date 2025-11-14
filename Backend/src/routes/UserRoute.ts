@@ -9,6 +9,8 @@ import {
   changePassword,
   resetPassword,
   forgetPassword,
+  updateUser,
+  getUser,
 } from "../controllers/UserController";
 import { requireAuth } from "../middlewares/authMiddleware";
 
@@ -18,10 +20,12 @@ router.post("/register", register);
 router.post("/verify-email", verifyEmail);
 router.post("/loginStepOne", loginStepOne);
 router.post("/verifyLogin", verifyLogin);
+router.get("/getUser", requireAuth, getUser);
 router.post("/refreshToken", refreshToken);
 router.post("/changePassword", requireAuth, changePassword);
 router.post("/forgetPassword", forgetPassword);
 router.post("/resetPassword", resetPassword);
-router.post("/logout", requireAuth, logout);
+router.put("/updateUser", requireAuth, updateUser);
+router.post("/logout", logout);
 
 export default router;

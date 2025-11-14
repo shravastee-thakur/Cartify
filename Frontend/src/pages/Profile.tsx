@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 // Define user profile type
 interface UserProfile {
   name: string;
-  email: string;
   phoneNumber: string;
   address: string;
   city: string;
@@ -13,48 +16,45 @@ interface UserProfile {
 type Tab = "profile" | "orders";
 
 const ProfilePage: React.FC = () => {
+  const { user, accessToken } = useSelector((state: RootState) => state.user);
   const [activeTab, setActiveTab] = useState<Tab>("profile");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize form data with empty values (will be replaced)
   const [formData, setFormData] = useState<UserProfile>({
     name: "",
-    email: "",
     phoneNumber: "",
     address: "",
     city: "",
     pinCode: "",
   });
 
-  // Simulate fetching user data (replace with real API call)
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchProfile = async () => {
       try {
-        // ✅ REPLACE THIS WITH YOUR ACTUAL API CALL
-        // Example: const response = await api.get('/user/profile');
-        // For demo, we use mock data
-        const mockUserData: UserProfile = {
-          name: "Shravastee Thakur",
-          email: "shravastee@example.com",
-          phoneNumber: "+91 98765 43210",
-          address: "123 Main Street, Sector 5",
-          city: "Mumbai",
-          pinCode: "400001",
-        };
+        const res = await axios.get(
+          "http://localhost:3000/api/v1/user/getUser",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
 
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 400));
-
-        setFormData(mockUserData);
-      } catch (error) {
-        console.error("Failed to load profile:", error);
-        // Optionally show error to user
-      } finally {
-        setLoading(false);
+        setFormData({
+          name: res.data.user.name || "",
+          phoneNumber: res.data.user.phoneNumber || "",
+          address: res.data.user.address || "",
+          city: res.data.user.city || "",
+          pinCode: res.data.user.pinCode || "",
+        });
+      } catch (err) {
+        console.log(err);
       }
     };
 
-    fetchUserProfile();
+    fetchProfile();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,13 +63,39 @@ const ProfilePage: React.FC = () => {
       ...prev,
       [name]: value,
     }));
+    console.log(formData);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Updated profile:", formData);
-    alert("Profile updated successfully!");
-    // TODO: Send formData to your backend API
+    setLoading(true);
+
+    try {
+      const res = await axios.put(
+        "http://localhost:3000/api/v1/user/updateUser",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      console.log(res.data);
+      if (res.data.success) {
+        toast(res.data.message, {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+        setFormData(formData);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   // Show loading state
@@ -129,24 +155,6 @@ const ProfilePage: React.FC = () => {
                     id="name"
                     name="name"
                     value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-gray-700 text-sm font-medium mb-1"
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA812F] focus:border-transparent"
                     required

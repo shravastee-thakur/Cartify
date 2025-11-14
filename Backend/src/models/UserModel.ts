@@ -6,6 +6,10 @@ interface IUser extends mongoose.Document {
   lastLogin: Date;
   refreshToken: string;
   isVerified: boolean;
+  phoneNumber: string;
+  address: string;
+  city: string;
+  pinCode: string;
   otp?: string;
   otpExpiresAt?: Date;
   resetPasswordToken?: string;
@@ -39,6 +43,18 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       required: true,
       select: false,
+    },
+    phoneNumber: {
+      type: String,
+    },
+    address: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    pinCode: {
+      type: String,
     },
     lastLogin: {
       type: Date,
