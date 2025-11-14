@@ -10,7 +10,6 @@ import {
   setIsVerified,
   setName,
   setRole,
-  setUser,
 } from "../redux/UserSlice";
 
 const VerifyOtp = () => {
@@ -53,7 +52,6 @@ const VerifyOtp = () => {
         dispatch(setIsVerified(res.data.user.isVerified));
         dispatch(setName(res.data.user.name));
         dispatch(setRole(res.data.user.role));
-        dispatch(setUser(res.data.user));
         Navigate("/");
       }
     } catch (error) {

@@ -21,6 +21,7 @@ import {
   getStoredHashedRefreshToken,
   storeRefreshToken,
 } from "../utils/redisTokenStore";
+import logger from "../utils/logger";
 
 // Constants
 const VERIFICATION_TOKEN_EXPIRY = 300;
@@ -100,7 +101,8 @@ export const register = async (
       message:
         "Verification email sent. Please check your email to complete registration.",
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Register error: ${error.message}`);
     next(error);
   }
 };
@@ -153,7 +155,8 @@ export const verifyEmail = async (
       },
       message: "User created successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Verify email error: ${error.message}`);
     next(error);
   }
 };
@@ -225,6 +228,7 @@ export const loginStepOne = async (
       userId: user.id,
     });
   } catch (error: any) {
+    logger.error(`Login error: ${error.message}`);
     next(error);
   }
 };
@@ -310,7 +314,8 @@ export const verifyLogin = async (
         isVerified: user.isVerified,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Verify login error: ${error.message}`);
     next(error);
   }
 };
@@ -356,7 +361,8 @@ export const getUser = async (
         isVerified: user.isVerified,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Get user error: ${error.message}`);
     next(error);
   }
 };
@@ -429,7 +435,8 @@ export const refreshToken = async (
         role: user.role,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Refresh token error: ${error.message}`);
     next(error);
   }
 };
@@ -469,7 +476,8 @@ export const changePassword = async (
     return res
       .status(201)
       .json({ success: true, message: "Password changed successfully" });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Change password error: ${error.message}`);
     next(error);
   }
 };
@@ -521,7 +529,8 @@ export const forgetPassword = async (
       success: true,
       message: "Password reset link sent to your email",
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Forget password error: ${error.message}`);
     next(error);
   }
 };
@@ -562,7 +571,8 @@ export const resetPassword = async (
       success: true,
       message: "Password has been successfully reset.",
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Reset password error: ${error.message}`);
     next(error);
   }
 };
@@ -627,7 +637,8 @@ export const updateUser = async (
         isVerified: user.isVerified,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Update profile error: ${error.message}`);
     next(error);
   }
 };
@@ -655,7 +666,8 @@ export const logout = async (
     return res
       .status(201)
       .json({ success: true, message: "User logged out successfully" });
-  } catch (error) {
+  } catch (error: any) {
+    logger.error(`Logout error: ${error.message}`);
     next(error);
   }
 };

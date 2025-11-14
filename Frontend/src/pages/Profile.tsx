@@ -16,9 +16,8 @@ interface UserProfile {
 type Tab = "profile" | "orders";
 
 const ProfilePage: React.FC = () => {
-  const { user, accessToken } = useSelector((state: RootState) => state.user);
+  const { accessToken } = useSelector((state: RootState) => state.user);
   const [activeTab, setActiveTab] = useState<Tab>("profile");
-  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState<UserProfile>({
     name: "",
@@ -68,7 +67,6 @@ const ProfilePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
       const res = await axios.put(
@@ -97,15 +95,6 @@ const ProfilePage: React.FC = () => {
       console.log(error);
     }
   };
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-[calc(100vh-65px)] flex items-center justify-center bg-gray-50">
-        <div className="text-lg text-gray-600">Loading your profile...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[calc(100vh-65px)] bg-gray-50 p-4">

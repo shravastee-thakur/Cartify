@@ -6,6 +6,7 @@ import { connectDb } from "./utils/db";
 import { connectRedis } from "./utils/redis";
 import cookieParser from "cookie-parser";
 import UserRouter from "./routes/UserRoute";
+import logger from "./utils/logger";
 
 const app: Express = express();
 
@@ -34,5 +35,5 @@ app.use("/api/v1/user", UserRouter);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Listening to port: http://localhost:${PORT}`);
+  logger.info(`Server started on http://localhost:${PORT}`);
 });
