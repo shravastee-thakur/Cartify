@@ -6,6 +6,7 @@ import { connectDb } from "./utils/db";
 import { connectRedis } from "./utils/redis";
 import cookieParser from "cookie-parser";
 import UserRouter from "./routes/UserRoute";
+import ProductRouter from "./routes/ProductRoute";
 import logger from "./utils/logger";
 
 const app: Express = express();
@@ -31,6 +32,8 @@ app.use(
 // Routes
 app.use("/api/v1/user", UserRouter);
 // http://localhost:3000/api/v1/user/register
+app.use("/api/v1/product", ProductRouter);
+// http://localhost:3000/api/v1/product/createProduct
 
 app.use(errorHandler);
 

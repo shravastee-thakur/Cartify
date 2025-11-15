@@ -10,10 +10,12 @@ cloudinary.config({
 });
 const storage = multer.memoryStorage();
 
-async function imageUploadUtil(file: Buffer): Promise<UploadApiResponse> {
+export async function imageUploadUtil(
+  file: Buffer
+): Promise<UploadApiResponse> {
   return new Promise((resolve, reject) => {
     const upload = cloudinary.uploader.upload_stream(
-      { resource_type: "auto" },
+      { resource_type: "image", folder: "Cartify" },
       (err, result) => {
         if (err) reject(err);
         else resolve(result as UploadApiResponse);
@@ -26,4 +28,4 @@ async function imageUploadUtil(file: Buffer): Promise<UploadApiResponse> {
 
 const upload: Multer = multer({ storage });
 
-module.exports = { upload, imageUploadUtil };
+export default upload;

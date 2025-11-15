@@ -11,6 +11,7 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { Toaster } from "react-hot-toast";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
+import AllProducts from "./pages/AllProducts";
 
 const App = () => {
   return (
@@ -31,6 +32,7 @@ const App = () => {
           <Route path="/verify" element={<VerifyEmailPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/all-products" element={<AllProducts />} />
         </Routes>
       </BrowserRouter>
     </div>

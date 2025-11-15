@@ -29,7 +29,9 @@ export const errorHandler = (
   // Duplicate key error
   if (err.code === 11000) {
     statusCode = 400;
-    message = `Duplicate field value entered: ${Object.keys(err.keyValue || {})}`;
+    message = `Duplicate field value entered: ${Object.keys(
+      err.keyValue || {}
+    )}`;
   }
 
   // Validation error (Mongoose validation)
